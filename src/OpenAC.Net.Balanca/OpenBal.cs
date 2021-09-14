@@ -121,7 +121,7 @@ namespace OpenAC.Net.Balanca
         {
             if (device == null) throw new OpenException("A conexão não esta ativa.");
 
-            var Monitorando = Config.IsMonitorar;
+            var monitorando = Config.IsMonitorar;
 
             try
             {
@@ -135,7 +135,7 @@ namespace OpenAC.Net.Balanca
             }
             finally
             {
-                Config.IsMonitorar = Monitorando;
+                Config.IsMonitorar = monitorando;
             }
 
             return bal.UltimoPesoLido;
@@ -180,7 +180,7 @@ namespace OpenAC.Net.Balanca
             cancelamento?.Cancel();
 
             //Libera a porta serial
-            if (device == null) return;
+            if (!IsConectado) return;
 
             Desconectar();
         }
