@@ -11,7 +11,6 @@
     <Authors>Projeto OpenAC .Net</Authors>
     <PackageProjectUrl>https://acbrnet.github.io</PackageProjectUrl>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-    <PackageIconUrl>https://avatars2.githubusercontent.com/u/7342977?v=3&amp;amp;s=200</PackageIconUrl>
     <RepositoryUrl>https://github.com/OpenAC-Net/OpenAC.Net.Balanca</RepositoryUrl>
     <RepositoryType>Github</RepositoryType>
     <PackageTags>OpenAC.Net.Balanca</PackageTags>
