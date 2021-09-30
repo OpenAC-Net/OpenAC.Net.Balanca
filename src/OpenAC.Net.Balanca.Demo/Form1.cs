@@ -32,7 +32,7 @@ namespace OpenAC.Net.Balanca.Demo
                 Balanca.Config.Baud = (int)numericUpDown1.Value;
                 Balanca.Config.TimeOut = (int)numericUpDown2.Value;
                 Balanca.Config.DelayMonitoramento = (int)numericUpDown3.Value;
-                Balanca.Config.ControlePorta = false;
+                Balanca.Config.ControlePorta = true;
 
                 Balanca.Conectar();
                 btnConectar.Text = @"Desconectar";
