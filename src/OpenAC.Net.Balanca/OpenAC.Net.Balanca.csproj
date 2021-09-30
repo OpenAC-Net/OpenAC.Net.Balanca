@@ -11,6 +11,7 @@
     <Authors>Projeto OpenAC .Net</Authors>
     <PackageProjectUrl>https://acbrnet.github.io</PackageProjectUrl>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <PackageIconUrl>https://avatars.githubusercontent.com/u/90476515?s=200&amp;v=4</PackageIconUrl>
     <RepositoryUrl>https://github.com/OpenAC-Net/OpenAC.Net.Balanca</RepositoryUrl>
     <RepositoryType>Github</RepositoryType>
     <PackageTags>OpenAC.Net.Balanca</PackageTags>
@@ -19,7 +20,7 @@
     <PackageLicenseFile>LICENSE</PackageLicenseFile>
     <AssemblyVersion>1.0.0.0</AssemblyVersion>
     <FileVersion>1.0.0.0</FileVersion>
-    <Version>1.0.0.0</Version>
+    <Version>1.0.0.1</Version>
     <PublishRepositoryUrl>true</PublishRepositoryUrl>
     <EmbedUntrackedSources>true</EmbedUntrackedSources>
     <DebugType>embedded</DebugType>
@@ -58,10 +59,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <None Include="..\..\LICENSE">
-      <Pack>True</Pack>
-      <PackagePath></PackagePath>
-    </None>
+    <None Include="..\..\LICENSE" Pack="true" PackagePath="\" />
   </ItemGroup>
 
   <ItemGroup>
@@ -69,8 +67,8 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="OpenAC.Net.Core" Version="1.0.0" />
-    <PackageReference Include="OpenAC.Net.Devices" Version="1.0.0" />
+    <PackageReference Include="OpenAC.Net.Core" Version="1.0.0.1" />
+    <PackageReference Include="OpenAC.Net.Devices" Version="1.0.0.1" />
   </ItemGroup>
 
 </Project>
