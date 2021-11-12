@@ -68,7 +68,7 @@ namespace OpenAC.Net.Balanca
 
         #endregion Properties
 
-        #region Métodos
+        #region Methods
 
         /// <summary>
         /// Metodo para conectar na balança.
@@ -98,7 +98,7 @@ namespace OpenAC.Net.Balanca
         }
 
         /// <summary>
-        ///
+        /// Metodo para desconectar da balança.
         /// </summary>
         /// <exception cref="ArgumentException"></exception>
         public void Desconectar()
@@ -185,6 +185,6 @@ namespace OpenAC.Net.Balanca
             Desconectar();
         }
 
-        #endregion Métodos
+        #endregion Methods
     }
 }

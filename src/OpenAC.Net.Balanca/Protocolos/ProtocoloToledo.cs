@@ -29,13 +29,12 @@
 // <summary></summary>
 // ***********************************************************************
 
-using System;
 using OpenAC.Net.Core.Extensions;
 using OpenAC.Net.Devices;
 
 namespace OpenAC.Net.Balanca
 {
-    public sealed class ProtocoloToledo : ProtocoloBase
+    internal sealed class ProtocoloToledo : ProtocoloBase
     {
         #region Constructors
 

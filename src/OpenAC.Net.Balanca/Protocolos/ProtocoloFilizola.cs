@@ -29,12 +29,11 @@
 // <summary></summary>
 // ***********************************************************************
 
-using System;
 using OpenAC.Net.Devices;
 
 namespace OpenAC.Net.Balanca
 {
-    public sealed class ProtocoloFilizola : ProtocoloBase
+    internal sealed class ProtocoloFilizola : ProtocoloBase
     {
         #region Constructors
 
