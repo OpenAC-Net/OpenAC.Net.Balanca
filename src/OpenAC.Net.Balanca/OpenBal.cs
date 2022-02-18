@@ -50,6 +50,9 @@ namespace OpenAC.Net.Balanca
 
         #region Eventos
 
+        /// <summary>
+        /// Evento lançando ao ler o peso.
+        /// </summary>
         public event EventHandler<BalancaEventArgs> AoLerPeso;
 
         #endregion Eventos
@@ -79,7 +82,7 @@ namespace OpenAC.Net.Balanca
             if (IsConectado) throw new OpenException("A porta já está aberta");
             if (!Enum.IsDefined(typeof(ProtocoloBalanca), Config.Protocolo)) throw new OpenException(@"Protocolo não suportado.");
 
-            device = OpenDeviceManager.GetCommunication(Config);
+            device = OpenDeviceFactory.Create(Config);
             device.Open();
 
             switch (Config.Protocolo)
@@ -155,9 +158,9 @@ namespace OpenAC.Net.Balanca
                         bal.LeSerial();
                         AoLerPeso?.Raise(this, new BalancaEventArgs(bal.UltimaResposta, bal.UltimoPesoLido));
                     }
-                    catch
+                    catch (Exception ex)
                     {
-                        //Não é necessário o tratamento no monitoramento, o LerPeso() faz o tratamento e lança a excessão tratada ao usuário
+                        AoLerPeso?.Raise(this, new BalancaEventArgs(bal.UltimaResposta, ex));
                     }
                     finally
                     {

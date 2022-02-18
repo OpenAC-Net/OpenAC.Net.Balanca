@@ -34,7 +34,7 @@ using OpenAC.Net.Devices;
 
 namespace OpenAC.Net.Balanca
 {
-    public sealed class OpenBalConfig : OpenDeviceConfig
+    public sealed class OpenBalConfig : SerialConfig
     {
         #region Fields
 
