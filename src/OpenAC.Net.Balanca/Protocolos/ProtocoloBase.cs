@@ -29,6 +29,7 @@
 // <summary></summary>
 // ***********************************************************************
 
+using System.Text;
 using System.Threading;
 using OpenAC.Net.Core.Logging;
 using OpenAC.Net.Devices;
@@ -49,14 +50,18 @@ namespace OpenAC.Net.Balanca
         ///
         /// </summary>
         /// <param name="device"></param>
-        protected ProtocoloBase(OpenDeviceStream device)
+        /// <param name="encoder"></param>
+        protected ProtocoloBase(OpenDeviceStream device, Encoding encoder)
         {
             this.device = device;
+            Encoder = encoder;
         }
 
         #endregion Constructors
 
         #region Properties
+
+        public Encoding Encoder { get; set; }
 
         /// <summary>
         /// Ultima resposta recebida.
@@ -105,7 +110,7 @@ namespace OpenAC.Net.Balanca
 
             try
             {
-                UltimaResposta = device.ReadString();
+                UltimaResposta = Encoder.GetString(device.Read());
                 this.Log().Info($"Protocolo: {GetType().Name} - TX: [{UltimaResposta}]");
 
                 UltimoPesoLido = InterpretarRepostaPeso();

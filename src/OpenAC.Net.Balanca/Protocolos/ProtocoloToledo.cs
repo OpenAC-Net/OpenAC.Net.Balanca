@@ -29,6 +29,7 @@
 // <summary></summary>
 // ***********************************************************************
 
+using System.Text;
 using OpenAC.Net.Core.Extensions;
 using OpenAC.Net.Devices;
 
@@ -38,7 +39,7 @@ namespace OpenAC.Net.Balanca
     {
         #region Constructors
 
-        public ProtocoloToledo(OpenDeviceStream device) : base(device)
+        public ProtocoloToledo(OpenDeviceStream device, Encoding encoder) : base(device, encoder)
         {
         }
 

@@ -30,6 +30,7 @@
 // ***********************************************************************
 
 using System;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using OpenAC.Net.Core;
@@ -38,10 +39,11 @@ using OpenAC.Net.Devices;
 
 namespace OpenAC.Net.Balanca
 {
-    public sealed class OpenBal : OpenComponent
+    public sealed class OpenBal<TConfig> : IDisposable where TConfig : IDeviceConfig
     {
         #region Fields
 
+        private ProtocoloBalanca protocolo;
         private CancellationTokenSource cancelamento;
         private OpenDeviceStream device;
         private ProtocoloBase bal;
@@ -57,17 +59,42 @@ namespace OpenAC.Net.Balanca
 
         #endregion Eventos
 
+        #region Constructors
+
+        internal OpenBal(ProtocoloBalanca protocolo, TConfig device)
+        {
+            Protocolo = protocolo;
+            Device = device;
+        }
+
+        ~OpenBal() => Dispose();
+
+        #endregion Constructors
+
         #region Properties
 
-        /// <summary>
-        /// Configurações da classe.
-        /// </summary>
-        public OpenBalConfig Config { get; private set; }
+        public TConfig Device { get; }
+
+        public Encoding Encoder { get; set; }
+
+        public ProtocoloBalanca Protocolo
+        {
+            get => protocolo;
+            set
+            {
+                if (Conectado) throw new OpenException("Não pode mudar o protocolo quando esta conectado.");
+                protocolo = value;
+            }
+        }
+
+        public bool IsMonitorar { get; set; }
+
+        public int DelayMonitoramento { get; set; }
 
         /// <summary>
         /// Obtem se esta ou não conectado na balança.
         /// </summary>
-        public bool IsConectado => device != null && device.Conectado;
+        public bool Conectado => device != null && device.Conectado;
 
         #endregion Properties
 
@@ -79,20 +106,20 @@ namespace OpenAC.Net.Balanca
         /// <exception cref="OpenException"></exception>
         public void Conectar()
         {
-            if (IsConectado) throw new OpenException("A porta já está aberta");
-            if (!Enum.IsDefined(typeof(ProtocoloBalanca), Config.Protocolo)) throw new OpenException(@"Protocolo não suportado.");
+            if (Conectado) throw new OpenException("A porta já está aberta");
+            if (!Enum.IsDefined(typeof(ProtocoloBalanca), Protocolo)) throw new OpenException(@"Protocolo não suportado.");
 
-            device = OpenDeviceFactory.Create(Config);
+            device = OpenDeviceFactory.Create(Device);
             device.Open();
 
-            switch (Config.Protocolo)
+            switch (Protocolo)
             {
                 case ProtocoloBalanca.Toledo:
-                    bal = new ProtocoloToledo(device);
+                    bal = new ProtocoloToledo(device, Encoder);
                     break;
 
                 case ProtocoloBalanca.Filizola:
-                    bal = new ProtocoloFilizola(device);
+                    bal = new ProtocoloFilizola(device, Encoder);
                     break;
             }
 
@@ -106,7 +133,7 @@ namespace OpenAC.Net.Balanca
         /// <exception cref="ArgumentException"></exception>
         public void Desconectar()
         {
-            if (!IsConectado) throw new OpenException("A porta não está aberta");
+            if (!Conectado) throw new OpenException("A porta não está aberta");
 
             cancelamento?.Cancel();
             device?.Close();
@@ -124,11 +151,11 @@ namespace OpenAC.Net.Balanca
         {
             if (device == null) throw new OpenException("A conexão não esta ativa.");
 
-            var monitorando = Config.IsMonitorar;
+            var monitorando = IsMonitorar;
 
             try
             {
-                Config.IsMonitorar = false;
+                IsMonitorar = false;
                 bal.LePeso();
                 AoLerPeso?.Raise(this, new BalancaEventArgs(bal.UltimaResposta, bal.UltimoPesoLido));
             }
@@ -138,7 +165,7 @@ namespace OpenAC.Net.Balanca
             }
             finally
             {
-                Config.IsMonitorar = monitorando;
+                IsMonitorar = monitorando;
             }
 
             return bal.UltimoPesoLido;
@@ -151,7 +178,7 @@ namespace OpenAC.Net.Balanca
                 while (!cancelamento.IsCancellationRequested)
                 {
                     //Não o while mesmo com o IsMonitorar false, porque pode ser uma para momentânea para uma requisição manual
-                    if (!Config.IsMonitorar) continue;
+                    if (!IsMonitorar) continue;
 
                     try
                     {
@@ -164,28 +191,18 @@ namespace OpenAC.Net.Balanca
                     }
                     finally
                     {
-                        await Task.Delay(Config.DelayMonitoramento);
+                        await Task.Delay(DelayMonitoramento);
                     }
                 }
             }, cancelamento.Token);
         }
 
         /// <inheritdoc />
-        protected override void OnInitialize()
-        {
-            Config = new OpenBalConfig(this);
-        }
-
         /// <inheritdoc />
-        protected override void OnDisposing()
+        public void Dispose()
         {
-            //Para o monitoramento
-            cancelamento?.Cancel();
-
-            //Libera a porta serial
-            if (!IsConectado) return;
-
-            Desconectar();
+            if (Conectado)
+                Desconectar();
         }
 
         #endregion Methods

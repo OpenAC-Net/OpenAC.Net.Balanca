@@ -15,12 +15,12 @@
     <RepositoryUrl>https://github.com/OpenAC-Net/OpenAC.Net.Balanca</RepositoryUrl>
     <RepositoryType>Github</RepositoryType>
     <PackageTags>OpenAC.Net.Balanca</PackageTags>
-    <Description>Biblioteca com as principais funções e classes utilizadas pelo Projeto OpenAC .Net</Description>
+    <Description>Biblioteca para comunicação com balanças do Projeto OpenAC .Net</Description>
     <NeutralLanguage>pt-BR</NeutralLanguage>
     <PackageLicenseFile>LICENSE</PackageLicenseFile>
-    <AssemblyVersion>1.0.0.0</AssemblyVersion>
-    <FileVersion>1.0.0.0</FileVersion>
-    <Version>1.0.0.2</Version>
+    <AssemblyVersion>1.1.0.0</AssemblyVersion>
+    <FileVersion>1.1.0.0</FileVersion>
+    <Version>1.1.0.0-preview.1</Version>
     <PublishRepositoryUrl>true</PublishRepositoryUrl>
     <EmbedUntrackedSources>true</EmbedUntrackedSources>
     <DebugType>embedded</DebugType>
@@ -68,7 +68,7 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
     <PackageReference Include="OpenAC.Net.Core" Version="1.0.0.1" />
-    <PackageReference Include="OpenAC.Net.Devices" Version="1.2.0-preview.4" />
+    <PackageReference Include="OpenAC.Net.Devices" Version="1.2.0-preview.8" />
   </ItemGroup>
 
 </Project>

@@ -1,12 +1,13 @@
 ﻿using System;
 using System.IO.Ports;
 using System.Windows.Forms;
+using OpenAC.Net.Devices;
 
 namespace OpenAC.Net.Balanca.Demo
 {
     public partial class Form1 : Form
     {
-        private OpenBal Balanca;
+        private OpenBal<SerialConfig> Balanca;
 
         public Form1()
         {
@@ -15,7 +16,7 @@ namespace OpenAC.Net.Balanca.Demo
 
         private void Form1_Load(object sender, EventArgs e)
         {
-            Balanca = new OpenBal();
+            Balanca = OpenBalFactory.CreateSerial(ProtocoloBalanca.Toledo);
             Balanca.AoLerPeso += Balanca_AoLerPeso;
 
             comboBox1.DataSource = SerialPort.GetPortNames();
@@ -25,14 +26,14 @@ namespace OpenAC.Net.Balanca.Demo
         private void btnConectar_Click(object sender, EventArgs e)
         {
             //Desconecta antes
-            if (!Balanca.IsConectado)
+            if (!Balanca.Conectado)
             {
-                Balanca.Config.Porta = comboBox1.Text;
-                Balanca.Config.Protocolo = (ProtocoloBalanca)Convert.ToInt32(comboBox2.SelectedValue);
-                Balanca.Config.Baud = (int)numericUpDown1.Value;
-                Balanca.Config.TimeOut = (int)numericUpDown2.Value;
-                Balanca.Config.DelayMonitoramento = (int)numericUpDown3.Value;
-                Balanca.Config.ControlePorta = true;
+                Balanca.Protocolo = (ProtocoloBalanca)Convert.ToInt32(comboBox2.SelectedValue);
+                Balanca.DelayMonitoramento = (int)numericUpDown3.Value;
+                Balanca.Device.Porta = comboBox1.Text;
+                Balanca.Device.Baud = (int)numericUpDown1.Value;
+                Balanca.Device.TimeOut = (int)numericUpDown2.Value;
+                Balanca.Device.ControlePorta = true;
 
                 Balanca.Conectar();
                 btnConectar.Text = @"Desconectar";
@@ -46,7 +47,7 @@ namespace OpenAC.Net.Balanca.Demo
 
         private void btnLerPeso_Click(object sender, EventArgs e)
         {
-            if (Balanca is not { IsConectado: true })
+            if (Balanca is not { Conectado: true })
             {
                 MessageBox.Show(@"Balança não conectada");
                 return;
@@ -57,7 +58,7 @@ namespace OpenAC.Net.Balanca.Demo
 
         private void chkMonitorar_CheckedChanged(object sender, EventArgs e)
         {
-            Balanca.Config.IsMonitorar = chkMonitorar.Checked;
+            Balanca.IsMonitorar = chkMonitorar.Checked;
         }
 
         private void Balanca_AoLerPeso(object sender, BalancaEventArgs e)

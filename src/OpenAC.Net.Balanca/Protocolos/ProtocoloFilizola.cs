@@ -29,6 +29,7 @@
 // <summary></summary>
 // ***********************************************************************
 
+using System.Text;
 using OpenAC.Net.Devices;
 
 namespace OpenAC.Net.Balanca
@@ -37,7 +38,7 @@ namespace OpenAC.Net.Balanca
     {
         #region Constructors
 
-        public ProtocoloFilizola(OpenDeviceStream device) : base(device)
+        public ProtocoloFilizola(OpenDeviceStream device, Encoding encoder) : base(device, encoder)
         {
         }
 
