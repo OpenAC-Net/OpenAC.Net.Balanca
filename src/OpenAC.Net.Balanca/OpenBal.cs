@@ -39,7 +39,7 @@ using OpenAC.Net.Devices;
 
 namespace OpenAC.Net.Balanca
 {
-    public sealed class OpenBal<TConfig> : IDisposable where TConfig : IDeviceConfig
+    public abstract class OpenBal : OpenDisposable
     {
         #region Fields
 
@@ -61,9 +61,9 @@ namespace OpenAC.Net.Balanca
 
         #region Constructors
 
-        internal OpenBal(ProtocoloBalanca protocolo, TConfig device)
+        internal OpenBal(IDeviceConfig device)
         {
-            Protocolo = protocolo;
+            Protocolo = ProtocoloBalanca.Toledo;
             Device = device;
         }
 
@@ -73,7 +73,7 @@ namespace OpenAC.Net.Balanca
 
         #region Properties
 
-        public TConfig Device { get; }
+        public IDeviceConfig Device { get; }
 
         public Encoding Encoder { get; set; }
 
@@ -199,7 +199,7 @@ namespace OpenAC.Net.Balanca
 
         /// <inheritdoc />
         /// <inheritdoc />
-        public void Dispose()
+        protected override void DisposeManaged()
         {
             if (Conectado)
                 Desconectar();

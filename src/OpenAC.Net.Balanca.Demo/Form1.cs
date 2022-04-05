@@ -7,7 +7,13 @@ namespace OpenAC.Net.Balanca.Demo
 {
     public partial class Form1 : Form
     {
-        private OpenBal<SerialConfig> Balanca;
+        #region Fields
+
+        private OpenBal<SerialConfig> balanca;
+
+        #endregion Fields
+
+        #region Constructors
 
         public Form1()
         {
@@ -16,50 +22,51 @@ namespace OpenAC.Net.Balanca.Demo
 
         private void Form1_Load(object sender, EventArgs e)
         {
-            Balanca = OpenBalFactory.CreateSerial(ProtocoloBalanca.Toledo);
-            Balanca.AoLerPeso += Balanca_AoLerPeso;
+            balanca = new OpenBal<SerialConfig>();
+            balanca.AoLerPeso += Balanca_AoLerPeso;
 
             comboBox1.DataSource = SerialPort.GetPortNames();
             comboBox2.DataSource = Enum.GetValues(typeof(ProtocoloBalanca));
         }
 
+        #endregion Constructors
+
+        #region EventHandlers
+
         private void btnConectar_Click(object sender, EventArgs e)
         {
             //Desconecta antes
-            if (!Balanca.Conectado)
+            if (!balanca.Conectado)
             {
-                Balanca.Protocolo = (ProtocoloBalanca)Convert.ToInt32(comboBox2.SelectedValue);
-                Balanca.DelayMonitoramento = (int)numericUpDown3.Value;
-                Balanca.Device.Porta = comboBox1.Text;
-                Balanca.Device.Baud = (int)numericUpDown1.Value;
-                Balanca.Device.TimeOut = (int)numericUpDown2.Value;
-                Balanca.Device.ControlePorta = true;
+                balanca.Protocolo = (ProtocoloBalanca)Convert.ToInt32(comboBox2.SelectedValue);
+                balanca.DelayMonitoramento = (int)numericUpDown3.Value;
+                balanca.Device.Porta = comboBox1.Text;
+                balanca.Device.Baud = (int)numericUpDown1.Value;
+                balanca.Device.TimeOut = (int)numericUpDown2.Value;
+                balanca.Device.ControlePorta = true;
 
-                Balanca.Conectar();
+                balanca.Conectar();
                 btnConectar.Text = @"Desconectar";
             }
             else
             {
-                Balanca.Desconectar();
+                balanca.Desconectar();
                 btnConectar.Text = @"Conectar";
             }
         }
 
         private void btnLerPeso_Click(object sender, EventArgs e)
         {
-            if (Balanca is not { Conectado: true })
+            if (balanca is not { Conectado: true })
             {
                 MessageBox.Show(@"Balança não conectada");
                 return;
             }
 
-            Balanca.LerPeso();
+            balanca.LerPeso();
         }
 
-        private void chkMonitorar_CheckedChanged(object sender, EventArgs e)
-        {
-            Balanca.IsMonitorar = chkMonitorar.Checked;
-        }
+        private void chkMonitorar_CheckedChanged(object sender, EventArgs e) => balanca.IsMonitorar = chkMonitorar.Checked;
 
         private void Balanca_AoLerPeso(object sender, BalancaEventArgs e)
         {
@@ -76,5 +83,7 @@ namespace OpenAC.Net.Balanca.Demo
 
             Application.DoEvents();
         }
+
+        #endregion EventHandlers
     }
 }
