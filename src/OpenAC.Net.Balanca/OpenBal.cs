@@ -148,7 +148,7 @@ namespace OpenAC.Net.Balanca
         /// </summary>
         /// <returns></returns>
         /// <exception cref="ArgumentException"></exception>
-        public decimal LerPeso(int timeOut = 3000)
+        public decimal LerPeso()
         {
             if (device == null) throw new OpenException("A conexão não esta ativa.");
 
@@ -157,7 +157,7 @@ namespace OpenAC.Net.Balanca
             try
             {
                 IsMonitorar = false;
-                bal.LePeso(timeOut);
+                bal.LePeso();
                 AoLerPeso?.Raise(this, new BalancaEventArgs(bal.UltimaResposta, bal.UltimoPesoLido));
             }
             catch (Exception ex)
