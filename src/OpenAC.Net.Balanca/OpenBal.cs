@@ -30,7 +30,6 @@
 // ***********************************************************************
 
 using System;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using OpenAC.Net.Core;
@@ -67,15 +66,11 @@ namespace OpenAC.Net.Balanca
             Device = device;
         }
 
-        ~OpenBal() => Dispose();
-
         #endregion Constructors
 
         #region Properties
 
         public IDeviceConfig Device { get; }
-
-        public Encoding Encoder { get; set; }
 
         public ProtocoloBalanca Protocolo
         {
@@ -109,18 +104,24 @@ namespace OpenAC.Net.Balanca
             if (Conectado) throw new OpenException("A porta já está aberta");
             if (!Enum.IsDefined(typeof(ProtocoloBalanca), Protocolo)) throw new OpenException(@"Protocolo não suportado.");
 
+            // Controle de porta não serve para balança.
+            Device.ControlePorta = false;
+
             device = OpenDeviceFactory.Create(Device);
             device.Open();
 
             switch (Protocolo)
             {
                 case ProtocoloBalanca.Toledo:
-                    bal = new ProtocoloToledo(device, Encoder);
+                    bal = new ProtocoloToledo(device);
                     break;
 
                 case ProtocoloBalanca.Filizola:
-                    bal = new ProtocoloFilizola(device, Encoder);
+                    bal = new ProtocoloFilizola(device);
                     break;
+
+                default:
+                    throw new ArgumentOutOfRangeException();
             }
 
             cancelamento = new CancellationTokenSource();
@@ -147,7 +148,7 @@ namespace OpenAC.Net.Balanca
         /// </summary>
         /// <returns></returns>
         /// <exception cref="ArgumentException"></exception>
-        public decimal LerPeso()
+        public decimal LerPeso(int timeOut = 3000)
         {
             if (device == null) throw new OpenException("A conexão não esta ativa.");
 
@@ -156,7 +157,7 @@ namespace OpenAC.Net.Balanca
             try
             {
                 IsMonitorar = false;
-                bal.LePeso();
+                bal.LePeso(timeOut);
                 AoLerPeso?.Raise(this, new BalancaEventArgs(bal.UltimaResposta, bal.UltimoPesoLido));
             }
             catch (Exception ex)

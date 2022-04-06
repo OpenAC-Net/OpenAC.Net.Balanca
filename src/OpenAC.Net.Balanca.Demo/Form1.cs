@@ -43,7 +43,7 @@ namespace OpenAC.Net.Balanca.Demo
                 balanca.Device.Porta = comboBox1.Text;
                 balanca.Device.Baud = (int)numericUpDown1.Value;
                 balanca.Device.TimeOut = (int)numericUpDown2.Value;
-                balanca.Device.ControlePorta = true;
+                balanca.Device.ControlePorta = false;
 
                 balanca.Conectar();
                 btnConectar.Text = @"Desconectar";

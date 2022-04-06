@@ -29,7 +29,9 @@
 // <summary></summary>
 // ***********************************************************************
 
-using System.Text;
+using System;
+using OpenAC.Net.Core.Extensions;
+using OpenAC.Net.Core.Logging;
 using OpenAC.Net.Devices;
 
 namespace OpenAC.Net.Balanca
@@ -38,7 +40,7 @@ namespace OpenAC.Net.Balanca
     {
         #region Constructors
 
-        public ProtocoloFilizola(OpenDeviceStream device, Encoding encoder) : base(device, encoder)
+        public ProtocoloFilizola(OpenDeviceStream device) : base(device)
         {
         }
 
@@ -46,9 +48,17 @@ namespace OpenAC.Net.Balanca
 
         #region Methods
 
+        public override decimal LePeso()
+        {
+            // A Filizola pode responder com Instavel inicalmente, mas depois ela poderia
+            // estabilizar... Portanto utilizará a função AguardarRespostaPeso
+            return AguardarRespostaPeso(true);
+        }
+
         /// <inheritdoc/>
         protected override decimal InterpretarRepostaPeso()
         {
+            if (UltimaResposta.IsEmpty()) return 0;
             var response = UltimaResposta.Substring(UltimaResposta.Length - 5);
 
             switch (response[0])

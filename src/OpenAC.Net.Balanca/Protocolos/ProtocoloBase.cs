@@ -29,6 +29,7 @@
 // <summary></summary>
 // ***********************************************************************
 
+using System;
 using System.Text;
 using System.Threading;
 using OpenAC.Net.Core.Logging;
@@ -51,10 +52,9 @@ namespace OpenAC.Net.Balanca
         /// </summary>
         /// <param name="device"></param>
         /// <param name="encoder"></param>
-        protected ProtocoloBase(OpenDeviceStream device, Encoding encoder)
+        protected ProtocoloBase(OpenDeviceStream device)
         {
             this.device = device;
-            Encoder = encoder;
         }
 
         #endregion Constructors
@@ -90,27 +90,16 @@ namespace OpenAC.Net.Balanca
         }
 
         /// <summary>
-        /// Envia comando Padrão para solicitar Peso.
-        /// As classes filhas podem reescrever se necessário.
-        /// </summary>
-        protected virtual void SolicitarPeso()
-        {
-            this.Log().Info($"Protocolo: {GetType().Name} - TX: [0x05]");
-            device.Limpar();
-            device.Write(new byte[] { 0x05 });
-        }
-
-        /// <summary>
         /// Le os dados da porta serial.
         /// </summary>
-        internal virtual void LeSerial()
+        public virtual void LeSerial()
         {
             UltimoPesoLido = 0;
             UltimaResposta = "";
 
             try
             {
-                UltimaResposta = Encoder.GetString(device.Read());
+                UltimaResposta = Encoding.UTF8.GetString(device.Read());
                 this.Log().Info($"Protocolo: {GetType().Name} - TX: [{UltimaResposta}]");
 
                 UltimoPesoLido = InterpretarRepostaPeso();
@@ -122,6 +111,36 @@ namespace OpenAC.Net.Balanca
             }
 
             this.Log().Info($"Protocolo: {GetType().Name} - UltimoPesoLido: {UltimoPesoLido:N6} - Resposta: [{UltimaResposta}]");
+        }
+
+        /// <summary>
+        /// Envia comando Padrão para solicitar Peso.
+        /// As classes filhas podem reescrever se necessário.
+        /// </summary>
+        protected virtual void SolicitarPeso()
+        {
+            this.Log().Info($"Protocolo: {GetType().Name} - TX: [0x05]");
+            device.Limpar();
+            device.Write(new byte[] { 0x05 });
+        }
+
+        protected decimal AguardarRespostaPeso(bool aReenviarSolicitarPeso)
+        {
+            var ret = -1M;
+            var wFinal = DateTime.Now.AddSeconds(3);
+            while (ret == -1 && wFinal > DateTime.Now)
+            {
+                if (aReenviarSolicitarPeso)
+                {
+                    SolicitarPeso();
+                    Thread.Sleep(200);
+                }
+
+                LeSerial();
+                ret = UltimoPesoLido;
+            }
+
+            return ret;
         }
 
         /// <summary>

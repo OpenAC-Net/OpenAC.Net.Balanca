@@ -29,8 +29,9 @@
 // <summary></summary>
 // ***********************************************************************
 
-using System.Text;
+using System;
 using OpenAC.Net.Core.Extensions;
+using OpenAC.Net.Core.Logging;
 using OpenAC.Net.Devices;
 
 namespace OpenAC.Net.Balanca
@@ -39,7 +40,7 @@ namespace OpenAC.Net.Balanca
     {
         #region Constructors
 
-        public ProtocoloToledo(OpenDeviceStream device, Encoding encoder) : base(device, encoder)
+        public ProtocoloToledo(OpenDeviceStream device) : base(device)
         {
         }
 
@@ -50,7 +51,7 @@ namespace OpenAC.Net.Balanca
         /// <inheritdoc/>
         protected override decimal InterpretarRepostaPeso()
         {
-            if (UltimaResposta.IsEmpty()) return 0M;
+            if (UltimaResposta.IsEmpty()) return 0;
             var response = UltimaResposta.Substring(UltimaResposta.Length - 6, 5);
 
             switch (response)
