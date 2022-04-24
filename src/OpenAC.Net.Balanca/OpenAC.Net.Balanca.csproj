@@ -6,7 +6,7 @@
     <RootNamespace>OpenAC.Net.Balanca</RootNamespace>
     <SignAssembly>true</SignAssembly>
     <AssemblyOriginatorKeyFile>OpenAC.snk</AssemblyOriginatorKeyFile>
-    <Copyright>Copyright © Projeto OpenAC .Net 2014 - 2021</Copyright>
+    <Copyright>Copyright © Projeto OpenAC .Net 2014 - 2022</Copyright>
     <Company>OpenAC .Net - Automação Comercial em .Net</Company>
     <Authors>Projeto OpenAC .Net</Authors>
     <PackageProjectUrl>https://acbrnet.github.io</PackageProjectUrl>
@@ -20,7 +20,7 @@
     <PackageLicenseFile>LICENSE</PackageLicenseFile>
     <AssemblyVersion>1.5.0.0</AssemblyVersion>
     <FileVersion>1.5.0.0</FileVersion>
-    <Version>1.5.0.0-preview.4</Version>
+    <Version>1.5.0.0</Version>
     <PublishRepositoryUrl>true</PublishRepositoryUrl>
     <EmbedUntrackedSources>true</EmbedUntrackedSources>
     <DebugType>embedded</DebugType>
@@ -67,7 +67,7 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="OpenAC.Net.Core" Version="1.5.0-preview.2" />
+    <PackageReference Include="OpenAC.Net.Core" Version="1.5.0" />
     <PackageReference Include="OpenAC.Net.Devices" Version="1.5.0-preview.4" />
   </ItemGroup>
 
