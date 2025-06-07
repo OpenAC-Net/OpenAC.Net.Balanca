@@ -1,26 +1,28 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>net452;netstandard2.0</TargetFrameworks>
+    <TargetFrameworks>net462;net470;net48;netstandard2.0;net6.0;net7.0;net8.0;net9.0</TargetFrameworks>
+    <LangVersion>latest</LangVersion>
     <AssemblyName>OpenAC.Net.Balanca</AssemblyName>
     <RootNamespace>OpenAC.Net.Balanca</RootNamespace>
     <SignAssembly>true</SignAssembly>
     <AssemblyOriginatorKeyFile>OpenAC.snk</AssemblyOriginatorKeyFile>
-    <Copyright>Copyright © Projeto OpenAC .Net 2014 - 2022</Copyright>
+    <Copyright>Copyright © Projeto OpenAC .Net 2014 - 2025</Copyright>
     <Company>OpenAC .Net - Automação Comercial em .Net</Company>
     <Authors>Projeto OpenAC .Net</Authors>
-    <PackageProjectUrl>https://acbrnet.github.io</PackageProjectUrl>
+    <PackageProjectUrl>https://openac.net.br/</PackageProjectUrl>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-    <PackageIconUrl>https://avatars.githubusercontent.com/u/90476515?s=200&amp;v=4</PackageIconUrl>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <PackageIcon>nuget.png</PackageIcon>
     <RepositoryUrl>https://github.com/OpenAC-Net/OpenAC.Net.Balanca</RepositoryUrl>
-    <RepositoryType>Github</RepositoryType>
-    <PackageTags>OpenAC.Net.Balanca</PackageTags>
-    <Description>Biblioteca para comunicação com balanças do Projeto OpenAC .Net</Description>
-    <NeutralLanguage>pt-BR</NeutralLanguage>
+    <RepositoryType>git</RepositoryType>
+    <PackageTags>OpenAC.Net Balanca</PackageTags>
     <PackageLicenseFile>LICENSE</PackageLicenseFile>
-    <AssemblyVersion>1.5.0.1</AssemblyVersion>
-    <FileVersion>1.5.0.1</FileVersion>
-    <Version>1.5.0.1</Version>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <NeutralLanguage>pt-BR</NeutralLanguage>
+    <AssemblyVersion>1.6.0.0</AssemblyVersion>
+    <FileVersion>1.6.0.0</FileVersion>
+    <Version>1.6.0</Version>
     <PublishRepositoryUrl>true</PublishRepositoryUrl>
     <EmbedUntrackedSources>true</EmbedUntrackedSources>
     <DebugType>embedded</DebugType>
@@ -28,47 +30,33 @@
     <ContinuousIntegrationBuild>true</ContinuousIntegrationBuild>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
     <PackageId>OpenAC.Net.Balanca</PackageId>
-  </PropertyGroup>
-
-  <PropertyGroup Condition=" '$(TargetFramework)' == 'netstandard2.0'">
-    <DefineConstants>NETCORE;NETSTANDARD;NETSTANDARD2_0</DefineConstants>
-  </PropertyGroup>
-
-  <PropertyGroup Condition=" '$(TargetFramework)' == 'net452'">
-    <DefineConstants>NET45;NETFULL</DefineConstants>
-  </PropertyGroup>
-
-  <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|net452|AnyCPU'">
-    <OutputPath>..\..\bin\Debug\</OutputPath>
-    <DocumentationFile>..\..\bin\Debug\net452\OpenAC.Net.Balanca.xml</DocumentationFile>
-  </PropertyGroup>
-
-  <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release|net452|AnyCPU'">
-    <OutputPath>..\..\bin\Release\</OutputPath>
-    <DocumentationFile>..\..\bin\Release\net452\OpenAC.Net.Balanca.xml</DocumentationFile>
-  </PropertyGroup>
-
-  <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|netstandard2.0|AnyCPU'">
-    <OutputPath>..\..\bin\Debug\</OutputPath>
-    <DocumentationFile>..\..\bin\Debug\netstandard2.0\OpenAC.Net.Balanca.xml</DocumentationFile>
-  </PropertyGroup>
-
-  <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release|netstandard2.0|AnyCPU'">
-    <OutputPath>..\..\bin\Release\</OutputPath>
-    <DocumentationFile>..\..\bin\Release\netstandard2.0\OpenAC.Net.Balanca.xml</DocumentationFile>
+    <Nullable>enable</Nullable>
+    <Description>Biblioteca para comunicação com balanças do Projeto OpenAC .Net</Description>
   </PropertyGroup>
 
   <ItemGroup>
-    <None Include="..\..\LICENSE" Pack="true" PackagePath="\" />
+    <None Include="..\..\LICENSE">
+      <Pack>True</Pack>
+      <PackagePath>/</PackagePath>
+    </None>
+    <None Include="..\..\nuget.png">
+      <Pack>True</Pack>
+      <PackagePath />
+      <Link>nuget.png</Link>
+    </None>
+    <None Include="..\..\README.md">
+      <Pack>True</Pack>
+      <PackagePath>/</PackagePath>
+    </None>
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.1.1">
+    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="8.0.0">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="OpenAC.Net.Core" Version="1.5.0.1" />
-    <PackageReference Include="OpenAC.Net.Devices" Version="1.5.0.1" />
+    <PackageReference Include="OpenAC.Net.Core" Version="1.6.0" />
+    <PackageReference Include="OpenAC.Net.Devices" Version="1.6.0" />
   </ItemGroup>
 
 </Project>
