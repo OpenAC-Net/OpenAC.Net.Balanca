@@ -4,7 +4,7 @@
     <OutputType>WinExe</OutputType>
     <TargetFramework>net9.0-windows</TargetFramework>
     <Nullable>enable</Nullable>
-	<IsPackable>false</IsPackable>
+    <IsPackable>false</IsPackable>
     <UseWindowsForms>true</UseWindowsForms>
     <ImplicitUsings>enable</ImplicitUsings>
     <LangVersion>default</LangVersion>
@@ -16,12 +16,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\OpenAC.Net.Balanca\OpenAC.Net.Balanca.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Reference Include="OpenAC.Net.Devices">
-      <HintPath>..\..\..\OpenAC.Net.Devices\bin\Debug\net452\OpenAC.Net.Devices.dll</HintPath>
-    </Reference>
   </ItemGroup>
 
 </Project>
