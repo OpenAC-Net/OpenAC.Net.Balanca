@@ -3,7 +3,11 @@
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
     <TargetFramework>net9.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+	<IsPackable>false</IsPackable>
     <UseWindowsForms>true</UseWindowsForms>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <LangVersion>default</LangVersion>
   </PropertyGroup>
 
   <ItemGroup>
