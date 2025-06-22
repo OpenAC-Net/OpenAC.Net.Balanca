@@ -32,48 +32,61 @@
 using OpenAC.Net.Core.Extensions;
 using OpenAC.Net.Devices;
 
-namespace OpenAC.Net.Balanca
+namespace OpenAC.Net.Balanca;
+
+/// <summary>
+/// Implementa o protocolo de comunicação para balanças Filizola.
+/// </summary>
+internal sealed class ProtocoloFilizola : ProtocoloBase
 {
-    internal sealed class ProtocoloFilizola : ProtocoloBase
+    #region Constructors
+
+    /// <summary>
+    /// Inicializa uma nova instância da classe <see cref="ProtocoloFilizola"/>.
+    /// </summary>
+    /// <param name="device">O dispositivo de comunicação.</param>
+    public ProtocoloFilizola(OpenDeviceStream device) : base(device)
     {
-        #region Constructors
-
-        public ProtocoloFilizola(OpenDeviceStream device) : base(device)
-        {
-        }
-
-        #endregion Constructors
-
-        #region Methods
-
-        public override decimal LePeso()
-        {
-            // A Filizola pode responder com Instavel inicalmente, mas depois ela poderia
-            // estabilizar... Portanto utilizará a função AguardarRespostaPeso
-            return AguardarRespostaPeso(true);
-        }
-
-        /// <inheritdoc/>
-        protected override decimal InterpretarRepostaPeso()
-        {
-            if (UltimaResposta.IsEmpty()) return 0;
-            var response = UltimaResposta.Substring(UltimaResposta.Length - 5);
-
-            switch (response[0])
-            {
-                // Peso instável
-                case 'I': return -1;
-
-                // Peso negativo
-                case 'N': return -2;
-
-                // Sobrecarga
-                case 'S': return -10;
-            }
-
-            return decimal.Parse(response) / 1000M;
-        }
-
-        #endregion Methods
     }
+
+    #endregion Constructors
+
+    #region Methods
+
+    /// <summary>
+    /// Lê o peso da balança Filizola, aguardando estabilização se necessário.
+    /// </summary>
+    /// <returns>O peso lido ou um valor negativo indicando erro/condição especial.</returns>
+    public override decimal LePeso()
+    {
+        // A Filizola pode responder com Instavel inicalmente, mas depois ela poderia
+        // estabilizar... Portanto utilizará a função AguardarRespostaPeso
+        return AguardarRespostaPeso(true);
+    }
+
+    /// <summary>
+    /// Interpreta a resposta recebida da balança Filizola e retorna o peso correspondente.
+    /// </summary>
+    /// <returns>
+    /// O peso lido, ou valores negativos para indicar condições especiais:
+    /// -1 para peso instável, -2 para peso negativo, -10 para sobrecarga.
+    /// </returns>
+    protected override decimal InterpretarRepostaPeso()
+    {
+        if (UltimaResposta!.IsEmpty()) return 0;
+        var response = UltimaResposta!.Substring(UltimaResposta.Length - 5);
+
+        return response[0] switch
+        {
+            // Peso instável
+            'I' => -1,
+            // Peso negativo
+            'N' => -2,
+            // Sobrecarga
+            'S' => -10,
+            _ => decimal.Parse(response) / 1000M
+        };
+    }
+
+    #endregion Methods
 }

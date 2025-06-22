@@ -31,24 +31,55 @@
 
 using System;
 
-namespace OpenAC.Net.Balanca
+namespace OpenAC.Net.Balanca;
+
+/// <summary>
+/// Fornece dados para eventos relacionados à balança.
+/// </summary>
+public class BalancaEventArgs : EventArgs
 {
-    public class BalancaEventArgs : EventArgs
+    #region Constructors
+
+    /// <summary>
+    /// Inicializa uma nova instância de <see cref="BalancaEventArgs"/> com a leitura e o peso.
+    /// </summary>
+    /// <param name="leitura">A leitura bruta recebida da balança.</param>
+    /// <param name="peso">O peso lido da balança.</param>
+    public BalancaEventArgs(string leitura, decimal peso)
     {
-        public string Leitura { get; set; }
-        public decimal? Peso { get; private set; }
-        public Exception Excecao { get; set; }
-
-        public BalancaEventArgs(string leitura, decimal peso)
-        {
-            Leitura = leitura;
-            Peso = peso;
-        }
-
-        public BalancaEventArgs(string leitura, Exception exception)
-        {
-            Leitura = leitura;
-            Excecao = exception;
-        }
+        Leitura = leitura;
+        Peso = peso;
     }
+
+    /// <summary>
+    /// Inicializa uma nova instância de <see cref="BalancaEventArgs"/> com a leitura e uma exceção.
+    /// </summary>
+    /// <param name="leitura">A leitura bruta recebida da balança.</param>
+    /// <param name="exception">A exceção ocorrida durante a leitura.</param>
+    public BalancaEventArgs(string leitura, Exception exception)
+    {
+        Leitura = leitura;
+        Excecao = exception;
+    }
+
+    #endregion Constructors
+
+    #region Properties
+
+    /// <summary>
+    /// Obtém ou define a leitura bruta recebida da balança.
+    /// </summary>
+    public string Leitura { get; set; }
+
+    /// <summary>
+    /// Obtém o peso lido da balança, se disponível.
+    /// </summary>
+    public decimal? Peso { get; private set; }
+
+    /// <summary>
+    /// Obtém ou define a exceção ocorrida durante a leitura, se houver.
+    /// </summary>
+    public Exception? Excecao { get; set; }
+
+    #endregion Properties
 }

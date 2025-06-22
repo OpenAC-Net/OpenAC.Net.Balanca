@@ -32,29 +32,39 @@
 using System;
 using OpenAC.Net.Devices;
 
-namespace OpenAC.Net.Balanca
+namespace OpenAC.Net.Balanca;
+
+/// <summary>
+/// Implementa uma versão genérica de <see cref="OpenBal"/> para configuração fortemente tipada.
+/// </summary>
+/// <typeparam name="TConfig">Tipo da configuração do dispositivo, que implementa <see cref="IDeviceConfig"/>.</typeparam>
+public sealed class OpenBal<TConfig> : OpenBal where TConfig : IDeviceConfig
 {
-    public sealed class OpenBal<TConfig> : OpenBal where TConfig : IDeviceConfig
+    #region Constructors
+
+    /// <summary>
+    /// Inicializa uma nova instância de <see cref="OpenBal{TConfig}"/> usando uma configuração padrão.
+    /// </summary>
+    public OpenBal() : base(Activator.CreateInstance<TConfig>())
     {
-        #region Constructors
-
-        public OpenBal() : base(Activator.CreateInstance<TConfig>())
-        {
-        }
-
-        public OpenBal(TConfig device) : base(device)
-        {
-        }
-
-        #endregion Constructors
-
-        #region properties
-
-        /// <summary>
-        /// Configuações de comunicação com a impressora.
-        /// </summary>
-        public new TConfig Device => (TConfig)base.Device;
-
-        #endregion properties
     }
+
+    /// <summary>
+    /// Inicializa uma nova instância de <see cref="OpenBal{TConfig}"/> usando a configuração informada.
+    /// </summary>
+    /// <param name="device">Configuração do dispositivo.</param>
+    public OpenBal(TConfig device) : base(device)
+    {
+    }
+
+    #endregion Constructors
+
+    #region properties
+
+    /// <summary>
+    /// Configurações de comunicação com a impressora.
+    /// </summary>
+    public new TConfig Device => (TConfig)base.Device;
+
+    #endregion properties
 }

@@ -29,11 +29,19 @@
 // <summary></summary>
 // ***********************************************************************
 
-namespace OpenAC.Net.Balanca
+namespace OpenAC.Net.Balanca;
+
+/// <summary>
+/// Protocolos suportados para comunicação com balanças.
+/// </summary>
+public enum ProtocoloBalanca
 {
-    public enum ProtocoloBalanca
-    {
-        Toledo,
-        Filizola
-    }
+    /// <summary>
+    /// Protocolo Toledo.
+    /// </summary>
+    Toledo,
+    /// <summary>
+    /// Protocolo Filizola.
+    /// </summary>
+    Filizola
 }
