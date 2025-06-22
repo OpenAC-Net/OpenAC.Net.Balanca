@@ -34,41 +34,50 @@ using OpenAC.Net.Core.Extensions;
 using OpenAC.Net.Core.Logging;
 using OpenAC.Net.Devices;
 
-namespace OpenAC.Net.Balanca
+namespace OpenAC.Net.Balanca;
+
+/// <summary>
+/// Implementa o protocolo de comunicação para balanças Toledo.
+/// </summary>
+internal sealed class ProtocoloToledo : ProtocoloBase
 {
-    internal sealed class ProtocoloToledo : ProtocoloBase
+    #region Constructors
+
+    /// <summary>
+    /// Inicializa uma nova instância da classe <see cref="ProtocoloToledo"/>.
+    /// </summary>
+    /// <param name="device">O dispositivo de comunicação.</param>
+    public ProtocoloToledo(OpenDeviceStream device) : base(device)
     {
-        #region Constructors
-
-        public ProtocoloToledo(OpenDeviceStream device) : base(device)
-        {
-        }
-
-        #endregion Constructors
-
-        #region Methods
-
-        /// <inheritdoc/>
-        protected override decimal InterpretarRepostaPeso()
-        {
-            if (UltimaResposta.IsEmpty()) return 0;
-            var response = UltimaResposta.Substring(UltimaResposta.Length - 6, 5);
-
-            switch (response)
-            {
-                // Peso instável
-                case "IIIII": return -1;
-
-                // Peso negativo
-                case "NNNNN": return -2;
-
-                // Sobrecarga
-                case "SSSSS": return -10;
-            }
-
-            return decimal.Parse(response) / 1000M;
-        }
-
-        #endregion Methods
     }
+
+    #endregion Constructors
+
+    #region Methods
+
+    /// <summary>
+    /// Interpreta a resposta recebida da balança e retorna o peso lido.
+    /// </summary>
+    /// <returns>
+    /// O peso lido em quilogramas. Retorna valores negativos para indicar condições especiais:
+    /// -1 para peso instável, -2 para peso negativo, -10 para sobrecarga.
+    /// </returns>
+    protected override decimal InterpretarRepostaPeso()
+    {
+        if (UltimaResposta!.IsEmpty()) return 0;
+        var response = UltimaResposta!.Substring(UltimaResposta.Length - 6, 5);
+
+        return response switch
+        {
+            // Peso instável
+            "IIIII" => -1,
+            // Peso negativo
+            "NNNNN" => -2,
+            // Sobrecarga
+            "SSSSS" => -10,
+            _ => decimal.Parse(response) / 1000M
+        };
+    }
+
+    #endregion Methods
 }
