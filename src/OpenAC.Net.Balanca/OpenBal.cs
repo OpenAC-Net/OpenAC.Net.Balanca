@@ -220,7 +220,8 @@ public abstract class OpenBal : OpenDisposable
 
                 try
                 {
-                    bal.LeSerial();
+                    bal.LePeso();
+                    //bal.LeSerial();
                     AoLerPeso?.Raise(this, new BalancaEventArgs(bal.UltimaResposta, bal.UltimoPesoLido));
                 }
                 catch (Exception ex)
