@@ -1,7 +1,5 @@
-﻿using System;
+﻿using OpenAC.Net.Devices;
 using System.IO.Ports;
-using System.Windows.Forms;
-using OpenAC.Net.Devices;
 
 namespace OpenAC.Net.Balanca.Demo
 {
@@ -74,11 +72,17 @@ namespace OpenAC.Net.Balanca.Demo
             {
                 label7.Text = $@"Ultimo peso {e.Peso:N3} Kg";
                 textBox1.Text += $@"{DateTime.Now:dd/MM/yyyy HH:mm:ss} - {e.Peso:N3} Kg" + Environment.NewLine;
+
+                textBox1.SelectionStart = textBox1.Text.Length;
+                textBox1.ScrollToCaret();
             }
 
             if (e.Excecao != null)
             {
                 textBox2.Text += $@"{DateTime.Now:dd/MM/yyyy HH:mm:ss} - {e.Excecao.Message}" + Environment.NewLine;
+
+                textBox2.SelectionStart = textBox2.Text.Length;
+                textBox2.ScrollToCaret();
             }
 
             Application.DoEvents();
