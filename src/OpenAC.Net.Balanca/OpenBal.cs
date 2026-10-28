@@ -1,246 +1,205 @@
-﻿// ***********************************************************************
-// Assembly         : OpenAC.Net.Balanca
-// Author           : Marcos Gerene
-// Created          : 11-09-2021
-//
-// Last Modified By : RFTD
-// Last Modified On : 11-09-2021
-// ***********************************************************************
-// <copyright file="OpenBal.cs" company="OpenAC .Net">
-//		        		   The MIT License (MIT)
-//	     		    Copyright (c) 2014-2022 Projeto OpenAC .Net
-//
-//	 Permission is hereby granted, free of charge, to any person obtaining
-// a copy of this software and associated documentation files (the "Software"),
-// to deal in the Software without restriction, including without limitation
-// the rights to use, copy, modify, merge, publish, distribute, sublicense,
-// and/or sell copies of the Software, and to permit persons to whom the
-// Software is furnished to do so, subject to the following conditions:
-//	 The above copyright notice and this permission notice shall be
-// included in all copies or substantial portions of the Software.
-//	 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
-// EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-// MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
-// IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
-// DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
-// ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-// DEALINGS IN THE SOFTWARE.
-// </copyright>
-// <summary></summary>
-// ***********************************************************************
-
 using System;
 using System.Threading;
 using System.Threading.Tasks;
 using OpenAC.Net.Core;
-using OpenAC.Net.Core.Extensions;
+using OpenAC.Net.Core.Logging;
 using OpenAC.Net.Devices;
 
 namespace OpenAC.Net.Balanca;
 
-/// <summary>
-/// Classe base abstrata para comunicação com balanças.
-/// </summary>
-public abstract class OpenBal : OpenDisposable
+/// <summary>Comunicação com balanças por dispositivos OpenAC (serial, TCP e outros).</summary>
+public abstract class OpenBal : OpenDisposable, IOpenLog
 {
-    #region Fields
-
-    /// <summary>
-    /// Protocolo de comunicação utilizado.
-    /// </summary>
+    private readonly object sincronizacao = new();
+    private readonly Func<IDeviceConfig, OpenDeviceStream> criarDispositivo;
     private ProtocoloBalanca protocolo;
+    private CancellationTokenSource? cancelamento;
+    private OpenDeviceStream? device;
+    private ProtocoloBase? bal;
+    private volatile bool monitorar;
+    private int delayMonitoramento = 200;
+    private int posicaoInicial;
+    private int tamanhoResposta;
 
-    /// <summary>
-    /// Token para cancelamento do monitoramento.
-    /// </summary>
-    private CancellationTokenSource cancelamento;
-
-    /// <summary>
-    /// Stream do dispositivo conectado.
-    /// </summary>
-    private OpenDeviceStream device;
-
-    /// <summary>
-    /// Instância do protocolo base utilizado.
-    /// </summary>
-    private ProtocoloBase bal;
-
-    #endregion Fields
-
-    #region Eventos
-
-    /// <summary>
-    /// Evento lançado ao ler o peso.
-    /// </summary>
-    public event EventHandler<BalancaEventArgs> AoLerPeso;
-
-    #endregion Eventos
-
-    #region Constructors
-
-    /// <summary>
-    /// Inicializa uma nova instância da classe <see cref="OpenBal"/>.
-    /// </summary>
-    /// <param name="device">Configuração do dispositivo.</param>
-    internal OpenBal(IDeviceConfig device)
+    internal OpenBal(IDeviceConfig device, Func<IDeviceConfig, OpenDeviceStream>? criarDispositivo = null)
     {
-        Protocolo = ProtocoloBalanca.Toledo;
-        Device = device;
+        Device = device ?? throw new ArgumentNullException(nameof(device));
+        this.criarDispositivo = criarDispositivo ?? (config => OpenDeviceFactory.Create(config));
     }
 
-    #endregion Constructors
+    /// <summary>Ocorre após leitura ou falha; no monitoramento é chamado em uma thread de trabalho.</summary>
+    public event EventHandler<BalancaEventArgs>? AoLerPeso;
 
-    #region Properties
-
-    /// <summary>
-    /// Configuração do dispositivo.
-    /// </summary>
+    /// <summary>Configuração do dispositivo de comunicação.</summary>
     public IDeviceConfig Device { get; }
 
-    /// <summary>
-    /// Protocolo de comunicação utilizado.
-    /// </summary>
+    /// <summary>Protocolo de comunicação; só pode ser alterado com a conexão fechada.</summary>
     public ProtocoloBalanca Protocolo
     {
-        get => protocolo;
+        get { lock (sincronizacao) return protocolo; }
         set
         {
-            if (Conectado) throw new OpenException("Não pode mudar o protocolo quando esta conectado.");
-            protocolo = value;
+            lock (sincronizacao)
+            {
+                VerificarDesconectado();
+                ProtocolosBalanca.Obter(value);
+                protocolo = value;
+            }
         }
     }
 
-    /// <summary>
-    /// Indica se o monitoramento está ativo.
-    /// </summary>
-    public bool IsMonitorar { get; set; }
+    /// <summary>Posição inicial, baseada em 1, para Genérica e Marte. Zero desabilita a extração.</summary>
+    public int PosicaoInicial
+    {
+        get => posicaoInicial;
+        set { lock (sincronizacao) { VerificarDesconectado(); posicaoInicial = ValidarNaoNegativo(value); } }
+    }
 
-    /// <summary>
-    /// Delay entre as leituras de monitoramento (em milissegundos).
-    /// </summary>
-    public int DelayMonitoramento { get; set; }
+    /// <summary>Quantidade de caracteres do peso nos protocolos Genérica e Marte.</summary>
+    public int TamanhoResposta
+    {
+        get => tamanhoResposta;
+        set { lock (sincronizacao) { VerificarDesconectado(); tamanhoResposta = ValidarNaoNegativo(value); } }
+    }
 
-    /// <summary>
-    /// Obtém se está ou não conectado na balança.
-    /// </summary>
-    public bool Conectado => device != null && device.Conectado;
+    /// <summary>Ativa a leitura das transmissões contínuas da balança.</summary>
+    public bool IsMonitorar { get => monitorar; set => monitorar = value; }
 
-    #endregion Properties
+    /// <summary>Intervalo positivo entre leituras do monitor em milissegundos. Padrão: 200.</summary>
+    public int DelayMonitoramento
+    {
+        get => Volatile.Read(ref delayMonitoramento);
+        set
+        {
+            if (value <= 0) throw new ArgumentOutOfRangeException(nameof(value));
+            Volatile.Write(ref delayMonitoramento, value);
+        }
+    }
 
-    #region Methods
+    /// <summary>Indica se o dispositivo está conectado.</summary>
+    public bool Conectado { get { lock (sincronizacao) return device?.Conectado == true; } }
 
-    /// <summary>
-    /// Método para conectar na balança.
-    /// </summary>
-    /// <exception cref="OpenException">Lançada se a porta já estiver aberta ou protocolo não suportado.</exception>
+    /// <summary>Abre o dispositivo e inicia o controle de monitoramento.</summary>
     public void Conectar()
     {
-        if (Conectado) throw new OpenException("A porta já está aberta");
-        if (!Enum.IsDefined(typeof(ProtocoloBalanca), Protocolo)) throw new OpenException(@"Protocolo não suportado.");
-
-        // Controle de porta não serve para balança.
-        Device.ControlePorta = false;
-
-        device = OpenDeviceFactory.Create(Device);
-        device.Open();
-
-        switch (Protocolo)
+        lock (sincronizacao)
         {
-            case ProtocoloBalanca.Toledo:
-                bal = new ProtocoloToledo(device);
-                break;
-
-            case ProtocoloBalanca.Filizola:
-                bal = new ProtocoloFilizola(device);
-                break;
-
-            default:
-                throw new ArgumentOutOfRangeException();
+            VerificarDesconectado();
+            var definicao = ProtocolosBalanca.Obter(protocolo, PosicaoInicial, TamanhoResposta);
+            Device.ControlePorta = false;
+            var novo = criarDispositivo(Device);
+            try
+            {
+                novo.Open();
+                if (!novo.Conectado) throw new OpenException("Não foi possível conectar à balança.");
+                device = novo;
+                bal = new ProtocoloBase(novo, definicao);
+                cancelamento = new CancellationTokenSource();
+                var fonte = cancelamento;
+                var protocoloAtual = bal;
+                _ = Task.Run(() => MonitorarAsync(protocoloAtual, fonte));
+            }
+            catch
+            {
+                novo.Dispose();
+                device = null;
+                bal = null;
+                throw;
+            }
         }
-
-        cancelamento = new CancellationTokenSource();
-        Monitorar();
     }
 
-    /// <summary>
-    /// Método para desconectar da balança.
-    /// </summary>
-    /// <exception cref="OpenException">Lançada se a porta não estiver aberta.</exception>
+    /// <summary>Cancela o monitoramento e libera o dispositivo, inclusive após perda da conexão.</summary>
     public void Desconectar()
     {
-        if (!Conectado) throw new OpenException("A porta não está aberta");
-
-        cancelamento?.Cancel();
-        device?.Close();
-        device?.Dispose();
-        device = null;
-        bal = null;
+        lock (sincronizacao)
+        {
+            if (device == null) throw new OpenException("A porta não está aberta.");
+            cancelamento?.Cancel();
+            cancelamento = null;
+            var atual = device;
+            device = null;
+            bal = null;
+            try { atual.Close(); }
+            finally { atual.Dispose(); }
+        }
     }
 
-    /// <summary>
-    /// Solicita a leitura do peso à balança.
-    /// </summary>
-    /// <returns>Peso lido.</returns>
-    /// <exception cref="OpenException">Lançada se a conexão não estiver ativa.</exception>
+    /// <summary>Solicita um peso. Falhas de comunicação retornam -9 e são informadas em <see cref="AoLerPeso"/>.</summary>
     public decimal LerPeso()
     {
-        if (device == null) throw new OpenException("A conexão não esta ativa.");
+        BalancaEventArgs resultado;
+        decimal peso;
+        lock (sincronizacao)
+        {
+            if (device?.Conectado != true || bal == null) throw new OpenException("A conexão não está ativa.");
+            try
+            {
+                peso = bal.LePeso();
+                resultado = new BalancaEventArgs(bal.UltimaResposta, peso);
+            }
+            catch (Exception ex)
+            {
+                peso = -9;
+                resultado = new BalancaEventArgs(bal.UltimaResposta, ex);
+            }
+        }
+        AoLerPeso?.Invoke(this, resultado);
+        return peso;
+    }
 
-        var monitorando = IsMonitorar;
+    /// <summary>Interpreta uma resposta sem abrir o dispositivo, usando o protocolo configurado.</summary>
+    public decimal InterpretarRespostaPeso(string resposta)
+    {
+        if (resposta == null) throw new ArgumentNullException(nameof(resposta));
+        lock (sincronizacao)
+            return ProtocolosBalanca.Obter(protocolo, PosicaoInicial, TamanhoResposta).Interpretar(resposta);
+    }
 
+    private async Task MonitorarAsync(ProtocoloBase atual, CancellationTokenSource fonte)
+    {
+        var token = fonte.Token;
         try
         {
-            IsMonitorar = false;
-            bal.LePeso();
-            AoLerPeso?.Raise(this, new BalancaEventArgs(bal.UltimaResposta, bal.UltimoPesoLido));
-        }
-        catch (Exception ex)
-        {
-            AoLerPeso?.Raise(this, new BalancaEventArgs(bal.UltimaResposta, ex));
-        }
-        finally
-        {
-            IsMonitorar = monitorando;
-        }
-
-        return bal.UltimoPesoLido;
-    }
-
-    /// <summary>
-    /// Inicia o monitoramento assíncrono da balança.
-    /// </summary>
-    private async void Monitorar()
-    {
-        await Task.Run(async () =>
-        {
-            while (!cancelamento.IsCancellationRequested)
+            while (!token.IsCancellationRequested)
             {
-                //Não o while mesmo com o IsMonitorar false, porque pode ser uma para momentânea para uma requisição manual
-                if (!IsMonitorar) continue;
-
-                try
+                await Task.Delay(DelayMonitoramento, token).ConfigureAwait(false);
+                BalancaEventArgs? resultado = null;
+                lock (sincronizacao)
                 {
-                    bal.LeSerial();
-                    AoLerPeso?.Raise(this, new BalancaEventArgs(bal.UltimaResposta, bal.UltimoPesoLido));
+                    if (token.IsCancellationRequested) break;
+                    if (!IsMonitorar || !ReferenceEquals(bal, atual)) continue;
+                    try
+                    {
+                        atual.LeSerial(token);
+                        resultado = new BalancaEventArgs(atual.UltimaResposta, atual.UltimoPesoLido);
+                    }
+                    catch (OperationCanceledException) when (token.IsCancellationRequested) { break; }
+                    catch (Exception ex) { resultado = new BalancaEventArgs(atual.UltimaResposta, ex); }
                 }
-                catch (Exception ex)
+                if (resultado != null && !token.IsCancellationRequested)
                 {
-                    AoLerPeso?.Raise(this, new BalancaEventArgs(bal.UltimaResposta, ex));
-                }
-                finally
-                {
-                    await Task.Delay(DelayMonitoramento);
+                    try { AoLerPeso?.Invoke(this, resultado); }
+                    catch (Exception ex) { this.Log().Error("Falha no evento AoLerPeso.", ex); }
                 }
             }
-        }, cancelamento.Token);
+        }
+        catch (OperationCanceledException) when (token.IsCancellationRequested) { }
+        finally { fonte.Dispose(); }
     }
+
+    private void VerificarDesconectado()
+    {
+        if (device != null) throw new OpenException("Desconecte a balança antes de alterar sua configuração.");
+    }
+
+    private static int ValidarNaoNegativo(int valor) =>
+        valor >= 0 ? valor : throw new ArgumentOutOfRangeException(nameof(valor));
 
     /// <inheritdoc />
     protected override void DisposeManaged()
     {
-        if (Conectado)
-            Desconectar();
+        lock (sincronizacao)
+            if (device != null) Desconectar();
     }
-
-    #endregion Methods
 }

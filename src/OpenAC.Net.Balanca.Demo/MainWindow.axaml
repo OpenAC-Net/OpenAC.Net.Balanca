@@ -1,0 +1,102 @@
+<Window xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="OpenAC.Net.Balanca.Demo.MainWindow"
+        Title="OpenAC .Net • Balança" Width="1120" Height="800" MinWidth="940" MinHeight="680"
+        Icon="/Assets/openac.ico">
+  <Grid ColumnDefinitions="210,*">
+    <Border Background="#142D50" Padding="24,32">
+      <Grid RowDefinitions="Auto,Auto,*,Auto">
+        <Image Source="/Assets/openac.png" Height="60" Stretch="Uniform" />
+        <StackPanel Grid.Row="1" Margin="0,36,0,0" Spacing="8">
+          <TextBlock Text="BALANÇA" Foreground="White" FontSize="22" FontWeight="SemiBold" />
+          <TextBlock Text="Comunicação e pesagem" Foreground="#B6CEF0" TextWrapping="Wrap" />
+        </StackPanel>
+        <TextBlock Grid.Row="3" Text="Projeto OpenAC .Net&#10;Demo multiplataforma" Foreground="#B6CEF0" FontSize="12" />
+      </Grid>
+    </Border>
+    <Grid Grid.Column="1" RowDefinitions="Auto,Auto,*,Auto" Margin="28" RowSpacing="18">
+      <Grid ColumnDefinitions="*,Auto">
+        <StackPanel Spacing="4">
+          <TextBlock Text="Leitura de balança" FontSize="26" FontWeight="SemiBold" />
+          <TextBlock Text="Configure o equipamento ou experimente uma resposta no simulador." Classes="muted" />
+        </StackPanel>
+        <Border Grid.Column="1" Background="#EDF4FF" CornerRadius="8" Padding="14,10" VerticalAlignment="Center">
+          <TextBlock x:Name="ConnectionStatus" Text="Desconectada" Foreground="#2456A4" />
+        </Border>
+      </Grid>
+      <Border Grid.Row="1" Classes="card">
+        <Grid ColumnDefinitions="*,Auto">
+          <StackPanel Spacing="5">
+            <TextBlock Text="ÚLTIMA LEITURA" Classes="label" />
+            <TextBlock x:Name="WeightText" Text="— kg" FontSize="42" FontWeight="SemiBold" />
+            <TextBlock x:Name="WeightStatus" Text="Aguardando leitura" Classes="muted" />
+          </StackPanel>
+          <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="12">
+            <Button x:Name="ReadButton" Content="Ler peso" Classes="primary" IsEnabled="False" Click="ReadWeight" />
+            <CheckBox x:Name="MonitorCheck" Content="Monitorar transmissão" IsEnabled="False" IsCheckedChanged="MonitorChanged" />
+          </StackPanel>
+        </Grid>
+      </Border>
+      <TabControl x:Name="MainTabs" Grid.Row="2">
+        <TabItem Header="Configuração">
+          <ScrollViewer>
+            <StackPanel Margin="0,14,0,0" Spacing="14">
+              <Border Classes="card">
+                <StackPanel Spacing="12">
+                  <TextBlock Text="Protocolo e conexão" Classes="heading" />
+                  <Grid x:Name="ConfigurationPanel" ColumnDefinitions="*,*" RowDefinitions="Auto,Auto,Auto,Auto" ColumnSpacing="16" RowSpacing="12">
+                    <StackPanel><TextBlock Text="Protocolo" Classes="label" /><ComboBox x:Name="ProtocolCombo" /></StackPanel>
+                    <StackPanel Grid.Column="1"><TextBlock Text="Transporte" Classes="label" /><ComboBox x:Name="TransportCombo" SelectionChanged="TransportChanged" /></StackPanel>
+                    <Grid x:Name="SerialPanel" Grid.Row="1" Grid.ColumnSpan="2" ColumnDefinitions="*,Auto,*,*" ColumnSpacing="12">
+                      <StackPanel><TextBlock Text="Porta serial" Classes="label" /><TextBox x:Name="PortText" PlaceholderText="COM1 ou /dev/ttyUSB0" /></StackPanel>
+                      <Button Grid.Column="1" Content="Detectar" VerticalAlignment="Bottom" Click="DetectPorts" />
+                      <StackPanel Grid.Column="2"><TextBlock Text="Baud rate" Classes="label" /><NumericUpDown x:Name="BaudInput" Minimum="300" Maximum="921600" Value="9600" /></StackPanel>
+                      <StackPanel Grid.Column="3"><TextBlock Text="Bits de dados" Classes="label" /><NumericUpDown x:Name="BitsInput" Minimum="5" Maximum="8" Value="8" /></StackPanel>
+                    </Grid>
+                    <Grid x:Name="TcpPanel" Grid.Row="1" Grid.ColumnSpan="2" ColumnDefinitions="*,*" ColumnSpacing="12" IsVisible="False">
+                      <StackPanel><TextBlock Text="Endereço IP" Classes="label" /><TextBox x:Name="HostText" Text="127.0.0.1" /></StackPanel>
+                      <StackPanel Grid.Column="1"><TextBlock Text="Porta TCP" Classes="label" /><NumericUpDown x:Name="TcpPortInput" Minimum="1" Maximum="65535" Value="9000" /></StackPanel>
+                    </Grid>
+                    <Grid x:Name="SerialOptions" Grid.Row="2" Grid.ColumnSpan="2" ColumnDefinitions="*,*,*" ColumnSpacing="12">
+                      <StackPanel><TextBlock Text="Paridade" Classes="label" /><ComboBox x:Name="ParityCombo" /></StackPanel>
+                      <StackPanel Grid.Column="1"><TextBlock Text="Bits de parada" Classes="label" /><ComboBox x:Name="StopCombo" /></StackPanel>
+                      <StackPanel Grid.Column="2"><TextBlock Text="Controle de fluxo" Classes="label" /><ComboBox x:Name="HandshakeCombo" /></StackPanel>
+                    </Grid>
+                    <Grid Grid.Row="3" Grid.ColumnSpan="2" ColumnDefinitions="*,*,*,*" ColumnSpacing="12">
+                      <StackPanel><TextBlock Text="Timeout (ms)" Classes="label" /><NumericUpDown x:Name="TimeoutInput" Minimum="100" Maximum="60000" Value="3000" /></StackPanel>
+                      <StackPanel Grid.Column="1"><TextBlock Text="Intervalo (ms)" Classes="label" /><NumericUpDown x:Name="IntervalInput" Minimum="10" Maximum="60000" Value="200" /></StackPanel>
+                      <StackPanel Grid.Column="2"><TextBlock Text="Posição inicial¹" Classes="label" /><NumericUpDown x:Name="PositionInput" Minimum="0" Maximum="65536" Value="0" /></StackPanel>
+                      <StackPanel Grid.Column="3"><TextBlock Text="Tamanho¹" Classes="label" /><NumericUpDown x:Name="LengthInput" Minimum="0" Maximum="65536" Value="0" /></StackPanel>
+                    </Grid>
+                  </Grid>
+                  <TextBlock Text="¹ Genérica e Marte: posição começa em 1 e tamanho indica quantos caracteres contêm o peso." Classes="muted" TextWrapping="Wrap" />
+                  <StackPanel Orientation="Horizontal" Spacing="12">
+                    <Button x:Name="ConnectButton" Content="Conectar" Classes="primary" Click="ToggleConnection" />
+                    <Button x:Name="SaveButton" Content="Salvar configuração" Click="SaveConfiguration" />
+                  </StackPanel>
+                </StackPanel>
+              </Border>
+            </StackPanel>
+          </ScrollViewer>
+        </TabItem>
+        <TabItem Header="Simulador">
+          <Border Classes="card" Margin="0,14,0,0">
+            <StackPanel Spacing="14">
+              <TextBlock Text="Interpretar resposta sem equipamento" Classes="heading" />
+              <TextBlock Text="Usa o protocolo selecionado na configuração. Informe os controles como \x02, \x03, \r e \n." Classes="muted" TextWrapping="Wrap" />
+              <TextBox x:Name="SimulationText" Text="\x0201234\x03" AcceptsReturn="True" MinHeight="110" FontFamily="monospace" />
+              <Button x:Name="SimulateButton" Content="Interpretar resposta" Classes="primary" Click="Simulate" />
+              <TextBlock Text="O simulador verifica o formato da resposta; a comunicação real depende da configuração do equipamento." Classes="muted" TextWrapping="Wrap" />
+            </StackPanel>
+          </Border>
+        </TabItem>
+        <TabItem Header="Leituras e retornos">
+          <Grid RowDefinitions="Auto,*" RowSpacing="12" Margin="0,14,0,0">
+            <Button Content="Limpar histórico" Click="ClearLog" />
+            <TextBox x:Name="LogText" Grid.Row="1" Classes="code" />
+          </Grid>
+        </TabItem>
+      </TabControl>
+      <TextBlock x:Name="MessageText" Grid.Row="3" Text="Pronto para conectar." Classes="muted" TextWrapping="Wrap" />
+    </Grid>
+  </Grid>
+</Window>

@@ -1,35 +1,5 @@
-﻿// ***********************************************************************
-// Assembly         : OpenAC.Net.Balanca
-// Author           : Marcos Gerene
-// Created          : 11-09-2021
-//
-// Last Modified By : RFTD
-// Last Modified On : 11-09-2021
-// ***********************************************************************
-// <copyright file="ProtocoloBase.cs" company="OpenAC .Net">
-//		        		   The MIT License (MIT)
-//	     		    Copyright (c) 2014-2022 Projeto OpenAC .Net
-//
-//	 Permission is hereby granted, free of charge, to any person obtaining
-// a copy of this software and associated documentation files (the "Software"),
-// to deal in the Software without restriction, including without limitation
-// the rights to use, copy, modify, merge, publish, distribute, sublicense,
-// and/or sell copies of the Software, and to permit persons to whom the
-// Software is furnished to do so, subject to the following conditions:
-//	 The above copyright notice and this permission notice shall be
-// included in all copies or substantial portions of the Software.
-//	 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
-// EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-// MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
-// IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
-// DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
-// ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-// DEALINGS IN THE SOFTWARE.
-// </copyright>
-// <summary></summary>
-// ***********************************************************************
-
 using System;
+using System.Diagnostics;
 using System.Text;
 using System.Threading;
 using OpenAC.Net.Core.Logging;
@@ -37,130 +7,105 @@ using OpenAC.Net.Devices;
 
 namespace OpenAC.Net.Balanca;
 
-/// <summary>
-/// Classe base abstrata para protocolos de comunicação com balanças.
-/// </summary>
-internal abstract class ProtocoloBase : IOpenLog
+internal sealed class ProtocoloBase : IOpenLog
 {
-    #region Fields
-
-    /// <summary>
-    /// Instância do dispositivo de comunicação.
-    /// </summary>
     private readonly OpenDeviceStream device;
+    private readonly DefinicaoProtocolo definicao;
+    private string pendente = "";
 
-    #endregion Fields
-
-    #region Constructors
-
-    /// <summary>
-    /// Inicializa uma nova instância da classe <see cref="ProtocoloBase"/>.
-    /// </summary>
-    /// <param name="device">Dispositivo de comunicação serial.</param>
-    protected ProtocoloBase(OpenDeviceStream device)
+    internal ProtocoloBase(OpenDeviceStream device, DefinicaoProtocolo definicao)
     {
         this.device = device;
+        this.definicao = definicao;
     }
 
-    #endregion Constructors
+    // Latin-1 preserva cada byte, inclusive os dígitos codificados da Saturno.
+    internal Encoding Encoder { get; set; } = Encoding.GetEncoding(28591);
+    internal string UltimaResposta { get; private set; } = "";
+    internal decimal UltimoPesoLido { get; private set; }
 
-    #region Properties
-
-    /// <summary>
-    /// Codificação utilizada para comunicação.
-    /// </summary>
-    public Encoding? Encoder { get; set; }
-
-    /// <summary>
-    /// Última resposta recebida da balança.
-    /// </summary>
-    public string? UltimaResposta { get; protected set; }
-
-    /// <summary>
-    /// Último peso lido da balança.
-    /// </summary>
-    public decimal UltimoPesoLido { get; protected set; }
-
-    #endregion Properties
-
-    #region Methods
-
-    /// <summary>
-    /// Lê o peso da balança.
-    /// </summary>
-    /// <returns>Peso lido ou valores negativos para representar erros.</returns>
-    public virtual decimal LePeso()
+    internal decimal LePeso(CancellationToken cancellationToken = default)
     {
-        SolicitarPeso();
-        Thread.Sleep(200);
-        LeSerial();
+        UltimaResposta = "";
+        UltimoPesoLido = -9;
+        var tempo = Stopwatch.StartNew();
+        do
+        {
+            SolicitarPeso();
+            if (definicao.Comando.Length > 0 && cancellationToken.WaitHandle.WaitOne(definicao.Espera))
+                cancellationToken.ThrowIfCancellationRequested();
+            LeSerial(cancellationToken);
+            if (!definicao.Estabilizar || UltimoPesoLido != -1) break;
+        } while (tempo.ElapsedMilliseconds < Math.Max(1, device.Config.TimeOut));
         return UltimoPesoLido;
     }
 
-    /// <summary>
-    /// Lê os dados da porta serial.
-    /// </summary>
-    public virtual void LeSerial()
+    internal void SolicitarPeso()
     {
-        UltimoPesoLido = 0;
-        UltimaResposta = "";
-
-        try
+        if (definicao.Comando.Length == 0) return;
+        if (definicao.Limpar)
         {
-            UltimaResposta = Encoding.UTF8.GetString(device.Read());
-            this.Log().Info($"Protocolo: {GetType().Name} - TX: [{UltimaResposta}]");
-
-            UltimoPesoLido = InterpretarRepostaPeso();
+            pendente = "";
+            device.Limpar();
         }
-        catch
+        this.Log().Info($"TX: [{definicao.Comando}]");
+        device.Write(Encoder.GetBytes(definicao.Comando));
+    }
+
+    internal void LeSerial(CancellationToken cancellationToken = default)
+    {
+        UltimoPesoLido = -9;
+        UltimaResposta = "";
+        var anteriores = new decimal[3];
+        for (var i = 0; i < definicao.Amostras; i++)
         {
             UltimoPesoLido = -9;
-            throw;
+            UltimaResposta = "";
+            UltimaResposta = LerResposta(cancellationToken);
+            this.Log().Info($"RX: [{UltimaResposta}]");
+            UltimoPesoLido = definicao.Interpretar(UltimaResposta);
+            anteriores[i % 3] = UltimoPesoLido;
         }
-
-        this.Log().Info($"Protocolo: {GetType().Name} - UltimoPesoLido: {UltimoPesoLido:N6} - Resposta: [{UltimaResposta}]");
+        if (definicao.Amostras > 1 && (anteriores[0] != anteriores[1] || anteriores[1] != anteriores[2]))
+            UltimoPesoLido = -1;
     }
 
-    /// <summary>
-    /// Envia comando padrão para solicitar o peso.
-    /// As classes filhas podem sobrescrever se necessário.
-    /// </summary>
-    protected virtual void SolicitarPeso()
+    private string LerResposta(CancellationToken cancellationToken)
     {
-        this.Log().Info($"Protocolo: {GetType().Name} - TX: [0x05]");
-        device.Limpar();
-        device.Write([0x05]);
-    }
-
-    /// <summary>
-    /// Aguarda a resposta do peso, reenviando a solicitação se necessário.
-    /// </summary>
-    /// <param name="aReenviarSolicitarPeso">Indica se deve reenviar a solicitação de peso.</param>
-    /// <returns>Peso lido ou -1 em caso de falha.</returns>
-    protected decimal AguardarRespostaPeso(bool aReenviarSolicitarPeso)
-    {
-        var ret = -1M;
-        var wFinal = DateTime.Now.AddSeconds(3);
-        while (ret == -1 && wFinal > DateTime.Now)
+        var tempo = Stopwatch.StartNew();
+        var ultimoDado = 0L;
+        while (tempo.ElapsedMilliseconds < Math.Max(1, device.Config.TimeOut))
         {
-            if (aReenviarSolicitarPeso)
+            cancellationToken.ThrowIfCancellationRequested();
+            var bytes = device.Read();
+            if (bytes.Length > 0)
             {
-                SolicitarPeso();
-                Thread.Sleep(200);
+                pendente += Encoder.GetString(bytes);
+                ultimoDado = tempo.ElapsedMilliseconds;
+                if (pendente.Length > 65536) throw new FormatException("Resposta da balança excedeu 64 KiB.");
             }
-
-            LeSerial();
-            ret = UltimoPesoLido;
+            if (definicao.Terminadores.Length > 0)
+            {
+                var fim = definicao.Amostras > 1
+                    ? pendente.IndexOfAny(definicao.Terminadores)
+                    : pendente.LastIndexOfAny(definicao.Terminadores);
+                if (fim >= 0)
+                {
+                    var resposta = pendente.Substring(0, fim + 1);
+                    pendente = pendente.Substring(fim + 1);
+                    if (!string.IsNullOrWhiteSpace(resposta)) return resposta;
+                }
+            }
+            else if (pendente.Length > 0 && tempo.ElapsedMilliseconds - ultimoDado >= 50)
+            {
+                var resposta = pendente;
+                pendente = "";
+                return resposta;
+            }
+            if (cancellationToken.WaitHandle.WaitOne(10)) cancellationToken.ThrowIfCancellationRequested();
         }
-
-        return ret;
+        UltimaResposta = pendente;
+        pendente = "";
+        throw new TimeoutException("A balança não retornou um quadro completo no tempo configurado.");
     }
-
-    /// <summary>
-    /// Interpreta a resposta recebida da serial e converte em peso.
-    /// </summary>
-    /// <returns>Peso lido.</returns>
-    protected abstract decimal InterpretarRepostaPeso();
-
-    #endregion Methods
 }

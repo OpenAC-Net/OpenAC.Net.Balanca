@@ -1,22 +1,14 @@
-using System;
-using System.Text;
-using System.Windows.Forms;
+using Avalonia;
 
-namespace OpenAC.Net.Balanca.Demo
+namespace OpenAC.Net.Balanca.Demo;
+
+internal static class Program
 {
-    internal static class Program
-    {
-        /// <summary>
-        ///  The main entry point for the application.
-        /// </summary>
-        [STAThread]
-        static void Main()
-        {
-            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
-            Application.SetHighDpiMode(HighDpiMode.SystemAware);
-            Application.EnableVisualStyles();
-            Application.SetCompatibleTextRenderingDefault(false);
-            Application.Run(new Form1());
-        }
-    }
+    [STAThread]
+    public static void Main(string[] args) => BuildAvaloniaApp().StartWithClassicDesktopLifetime(args);
+
+    public static AppBuilder BuildAvaloniaApp() => AppBuilder.Configure<App>()
+        .UsePlatformDetect()
+        .WithInterFont()
+        .LogToTrace();
 }

@@ -1,13 +1,13 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>net462;net470;net48;netstandard2.0;net6.0;net7.0;net8.0;net9.0</TargetFrameworks>
+    <TargetFrameworks>net462;net48;netstandard2.0;net8.0;net9.0;net10.0</TargetFrameworks>
     <LangVersion>latest</LangVersion>
     <AssemblyName>OpenAC.Net.Balanca</AssemblyName>
     <RootNamespace>OpenAC.Net.Balanca</RootNamespace>
     <SignAssembly>true</SignAssembly>
     <AssemblyOriginatorKeyFile>OpenAC.snk</AssemblyOriginatorKeyFile>
-    <Copyright>Copyright © Projeto OpenAC .Net 2014 - 2025</Copyright>
+    <Copyright>Copyright © Projeto OpenAC .Net 2014 - 2026</Copyright>
     <Company>OpenAC .Net - Automação Comercial em .Net</Company>
     <Authors>Projeto OpenAC .Net</Authors>
     <PackageProjectUrl>https://openac.net.br/</PackageProjectUrl>
@@ -20,9 +20,9 @@
     <PackageLicenseFile>LICENSE</PackageLicenseFile>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <NeutralLanguage>pt-BR</NeutralLanguage>
-    <AssemblyVersion>1.6.0.1</AssemblyVersion>
-    <FileVersion>1.6.0.1</FileVersion>
-    <Version>1.6.0.1</Version>
+    <AssemblyVersion>1.7.0</AssemblyVersion>
+    <FileVersion>1.7.0</FileVersion>
+    <Version>1.7.0</Version>
     <PublishRepositoryUrl>true</PublishRepositoryUrl>
     <EmbedUntrackedSources>true</EmbedUntrackedSources>
     <DebugType>embedded</DebugType>
@@ -51,12 +51,12 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="8.0.0">
+    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="10.0.403">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
     <PackageReference Include="OpenAC.Net.Core" Version="1.6.0" />
-    <PackageReference Include="OpenAC.Net.Devices" Version="1.6.0.1" />
+    <PackageReference Include="OpenAC.Net.Devices" Version="1.7.0" />
   </ItemGroup>
 
 </Project>

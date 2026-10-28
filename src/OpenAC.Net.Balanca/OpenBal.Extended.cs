@@ -1,4 +1,4 @@
-﻿// ***********************************************************************
+// ***********************************************************************
 // Assembly         : OpenAC.Net.Balanca
 // Author           : Marcos Gerene
 // Created          : 11-09-2021
@@ -62,7 +62,7 @@ public sealed class OpenBal<TConfig> : OpenBal where TConfig : IDeviceConfig
     #region properties
 
     /// <summary>
-    /// Configurações de comunicação com a impressora.
+    /// Configurações de comunicação com a balança.
     /// </summary>
     public new TConfig Device => (TConfig)base.Device;
 
