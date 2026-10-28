@@ -1,0 +1,11 @@
+<Solution>
+  <Configurations>
+    <Platform Name="Any CPU" />
+    <Platform Name="x64" />
+    <Platform Name="x86" />
+  </Configurations>
+  <Project Path="OpenAC.Net.Balanca.Demo.Test/OpenAC.Net.Balanca.Demo.Test.csproj" />
+  <Project Path="OpenAC.Net.Balanca.Demo/OpenAC.Net.Balanca.Demo.csproj" />
+  <Project Path="OpenAC.Net.Balanca.Test/OpenAC.Net.Balanca.Test.csproj" />
+  <Project Path="OpenAC.Net.Balanca/OpenAC.Net.Balanca.csproj" />
+</Solution>
