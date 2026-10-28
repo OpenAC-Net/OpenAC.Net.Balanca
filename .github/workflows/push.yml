@@ -33,13 +33,13 @@ jobs:
           10.x
 
     - name: Restore NuGet packages
-      run: dotnet restore OpenAC.Net.Balanca.sln
+      run: dotnet restore OpenAC.Net.Balanca.slnx
       working-directory: src
 
     - name: Build solution
-      run: dotnet msbuild OpenAC.Net.Balanca.sln -property:Configuration=Release -property:platform="Any CPU"
+      run: dotnet msbuild OpenAC.Net.Balanca.slnx -property:Configuration=Release -property:platform="Any CPU"
       working-directory: src
 
     - name: Run tests
-      run: dotnet test --solution OpenAC.Net.Balanca.sln --configuration Release --no-build
+      run: dotnet test --solution OpenAC.Net.Balanca.slnx --configuration Release --no-build
       working-directory: src
