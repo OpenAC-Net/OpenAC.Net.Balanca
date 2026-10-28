@@ -18,10 +18,16 @@ internal sealed class DefinicaoProtocolo
     }
 
     internal Func<string, decimal> Interpretar { get; }
+    
     internal string Comando { get; }
+    
     internal bool Limpar { get; }
+    
     internal bool Estabilizar { get; }
+    
     internal int Amostras { get; }
+    
     internal char[] Terminadores { get; }
+    
     internal int Espera { get; }
 }

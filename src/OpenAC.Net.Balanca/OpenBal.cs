@@ -17,9 +17,6 @@ public abstract class OpenBal : OpenDisposable, IOpenLog
     private OpenDeviceStream? device;
     private ProtocoloBase? bal;
     private volatile bool monitorar;
-    private int delayMonitoramento = 200;
-    private int posicaoInicial;
-    private int tamanhoResposta;
 
     internal OpenBal(IDeviceConfig device, Func<IDeviceConfig, OpenDeviceStream>? criarDispositivo = null)
     {
@@ -36,7 +33,10 @@ public abstract class OpenBal : OpenDisposable, IOpenLog
     /// <summary>Protocolo de comunicação; só pode ser alterado com a conexão fechada.</summary>
     public ProtocoloBalanca Protocolo
     {
-        get { lock (sincronizacao) return protocolo; }
+        get
+        {
+            lock (sincronizacao) return protocolo;
+        }
         set
         {
             lock (sincronizacao)
@@ -51,33 +51,57 @@ public abstract class OpenBal : OpenDisposable, IOpenLog
     /// <summary>Posição inicial, baseada em 1, para Genérica e Marte. Zero desabilita a extração.</summary>
     public int PosicaoInicial
     {
-        get => posicaoInicial;
-        set { lock (sincronizacao) { VerificarDesconectado(); posicaoInicial = ValidarNaoNegativo(value); } }
+        get;
+        set
+        {
+            lock (sincronizacao)
+            {
+                VerificarDesconectado();
+                field = ValidarNaoNegativo(value);
+            }
+        }
     }
 
     /// <summary>Quantidade de caracteres do peso nos protocolos Genérica e Marte.</summary>
     public int TamanhoResposta
     {
-        get => tamanhoResposta;
-        set { lock (sincronizacao) { VerificarDesconectado(); tamanhoResposta = ValidarNaoNegativo(value); } }
+        get;
+        set
+        {
+            lock (sincronizacao)
+            {
+                VerificarDesconectado();
+                field = ValidarNaoNegativo(value);
+            }
+        }
     }
 
     /// <summary>Ativa a leitura das transmissões contínuas da balança.</summary>
-    public bool IsMonitorar { get => monitorar; set => monitorar = value; }
+    public bool IsMonitorar
+    {
+        get => monitorar;
+        set => monitorar = value;
+    }
 
     /// <summary>Intervalo positivo entre leituras do monitor em milissegundos. Padrão: 200.</summary>
     public int DelayMonitoramento
     {
-        get => Volatile.Read(ref delayMonitoramento);
+        get => Volatile.Read(ref field);
         set
         {
             if (value <= 0) throw new ArgumentOutOfRangeException(nameof(value));
-            Volatile.Write(ref delayMonitoramento, value);
+            Volatile.Write(ref field, value);
         }
-    }
+    } = 200;
 
     /// <summary>Indica se o dispositivo está conectado.</summary>
-    public bool Conectado { get { lock (sincronizacao) return device?.Conectado == true; } }
+    public bool Conectado
+    {
+        get
+        {
+            lock (sincronizacao) return device?.Conectado == true;
+        }
+    }
 
     /// <summary>Abre o dispositivo e inicia o controle de monitoramento.</summary>
     public void Conectar()
@@ -97,7 +121,7 @@ public abstract class OpenBal : OpenDisposable, IOpenLog
                 cancelamento = new CancellationTokenSource();
                 var fonte = cancelamento;
                 var protocoloAtual = bal;
-                _ = Task.Run(() => MonitorarAsync(protocoloAtual, fonte));
+                _ = Task.Run(() => MonitorarAsync(protocoloAtual, fonte), fonte.Token);
             }
             catch
             {
@@ -120,8 +144,14 @@ public abstract class OpenBal : OpenDisposable, IOpenLog
             var atual = device;
             device = null;
             bal = null;
-            try { atual.Close(); }
-            finally { atual.Dispose(); }
+            try
+            {
+                atual.Close();
+            }
+            finally
+            {
+                atual.Dispose();
+            }
         }
     }
 
@@ -144,6 +174,7 @@ public abstract class OpenBal : OpenDisposable, IOpenLog
                 resultado = new BalancaEventArgs(bal.UltimaResposta, ex);
             }
         }
+
         AoLerPeso?.Invoke(this, resultado);
         return peso;
     }
@@ -174,18 +205,36 @@ public abstract class OpenBal : OpenDisposable, IOpenLog
                         atual.LeSerial(token);
                         resultado = new BalancaEventArgs(atual.UltimaResposta, atual.UltimoPesoLido);
                     }
-                    catch (OperationCanceledException) when (token.IsCancellationRequested) { break; }
-                    catch (Exception ex) { resultado = new BalancaEventArgs(atual.UltimaResposta, ex); }
+                    catch (OperationCanceledException) when (token.IsCancellationRequested)
+                    {
+                        break;
+                    }
+                    catch (Exception ex)
+                    {
+                        resultado = new BalancaEventArgs(atual.UltimaResposta, ex);
+                    }
                 }
+
                 if (resultado != null && !token.IsCancellationRequested)
                 {
-                    try { AoLerPeso?.Invoke(this, resultado); }
-                    catch (Exception ex) { this.Log().Error("Falha no evento AoLerPeso.", ex); }
+                    try
+                    {
+                        AoLerPeso?.Invoke(this, resultado);
+                    }
+                    catch (Exception ex)
+                    {
+                        this.Log().Error("Falha no evento AoLerPeso.", ex);
+                    }
                 }
             }
         }
-        catch (OperationCanceledException) when (token.IsCancellationRequested) { }
-        finally { fonte.Dispose(); }
+        catch (OperationCanceledException) when (token.IsCancellationRequested)
+        {
+        }
+        finally
+        {
+            fonte.Dispose();
+        }
     }
 
     private void VerificarDesconectado()
@@ -200,6 +249,7 @@ public abstract class OpenBal : OpenDisposable, IOpenLog
     protected override void DisposeManaged()
     {
         lock (sincronizacao)
-            if (device != null) Desconectar();
+            if (device != null)
+                Desconectar();
     }
 }

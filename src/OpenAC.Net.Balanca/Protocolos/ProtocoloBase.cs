@@ -21,7 +21,9 @@ internal sealed class ProtocoloBase : IOpenLog
 
     // Latin-1 preserva cada byte, inclusive os dígitos codificados da Saturno.
     internal Encoding Encoder { get; set; } = Encoding.GetEncoding(28591);
+    
     internal string UltimaResposta { get; private set; } = "";
+    
     internal decimal UltimoPesoLido { get; private set; }
 
     internal decimal LePeso(CancellationToken cancellationToken = default)
@@ -37,6 +39,7 @@ internal sealed class ProtocoloBase : IOpenLog
             LeSerial(cancellationToken);
             if (!definicao.Estabilizar || UltimoPesoLido != -1) break;
         } while (tempo.ElapsedMilliseconds < Math.Max(1, device.Config.TimeOut));
+
         return UltimoPesoLido;
     }
 
@@ -48,6 +51,7 @@ internal sealed class ProtocoloBase : IOpenLog
             pendente = "";
             device.Limpar();
         }
+
         this.Log().Info($"TX: [{definicao.Comando}]");
         device.Write(Encoder.GetBytes(definicao.Comando));
     }
@@ -66,6 +70,7 @@ internal sealed class ProtocoloBase : IOpenLog
             UltimoPesoLido = definicao.Interpretar(UltimaResposta);
             anteriores[i % 3] = UltimoPesoLido;
         }
+
         if (definicao.Amostras > 1 && (anteriores[0] != anteriores[1] || anteriores[1] != anteriores[2]))
             UltimoPesoLido = -1;
     }
@@ -84,6 +89,7 @@ internal sealed class ProtocoloBase : IOpenLog
                 ultimoDado = tempo.ElapsedMilliseconds;
                 if (pendente.Length > 65536) throw new FormatException("Resposta da balança excedeu 64 KiB.");
             }
+
             if (definicao.Terminadores.Length > 0)
             {
                 var fim = definicao.Amostras > 1
@@ -102,8 +108,10 @@ internal sealed class ProtocoloBase : IOpenLog
                 pendente = "";
                 return resposta;
             }
+
             if (cancellationToken.WaitHandle.WaitOne(10)) cancellationToken.ThrowIfCancellationRequested();
         }
+
         UltimaResposta = pendente;
         pendente = "";
         throw new TimeoutException("A balança não retornou um quadro completo no tempo configurado.");

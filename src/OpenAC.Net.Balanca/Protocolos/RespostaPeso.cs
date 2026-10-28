@@ -48,19 +48,26 @@ internal static class RespostaPeso
         var quadro = texto.Substring(inicio + 1);
         var divisor = 1000M;
         string peso;
-        if (!ramuza && quadro.StartsWith("02", StringComparison.Ordinal) && Campo(quadro, 59, 1) == "\u0003")
-            peso = Campo(quadro, 5, 6);
-        else if (!ramuza && Campo(quadro, 20, 1) == "\r")
+        switch (ramuza)
         {
-            divisor = (quadro[7] & 8) != 0 ? 100 : 1000;
-            peso = Campo(quadro, 1, 6);
+            case false when quadro.StartsWith("02", StringComparison.Ordinal) && Campo(quadro, 59, 1) == "\u0003":
+                peso = Campo(quadro, 5, 6);
+                break;
+            
+            case false when Campo(quadro, 20, 1) == "\r":
+                divisor = (quadro[7] & 8) != 0 ? 100 : 1000;
+                peso = Campo(quadro, 1, 6);
+                break;
+            
+            case false when Campo(quadro, 15, 1) == "\r" && !quadro.Contains('\u0003'):
+                divisor = (quadro[0] & 8) != 0 ? 100 : 1000;
+                peso = Campo(quadro, 3, 6);
+                break;
+            
+            default:
+                peso = Quadro(texto).Replace("kg", "").Trim();
+                break;
         }
-        else if (!ramuza && Campo(quadro, 15, 1) == "\r" && !quadro.Contains('\u0003'))
-        {
-            divisor = (quadro[0] & 8) != 0 ? 100 : 1000;
-            peso = Campo(quadro, 3, 6);
-        }
-        else peso = Quadro(texto).Replace("kg", "").Trim();
 
         peso = peso.Replace("+III,III", "I").Replace("-III,III", "N")
             .Replace("+SSS,SSS", "S");
